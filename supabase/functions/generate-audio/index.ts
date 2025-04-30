@@ -16,12 +16,9 @@ serve(async (req) => {
   try {
     const { text, voice } = await req.json();
     
-    // Obter a chave da API do ambiente seguro
-    const apiKey = "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";
-    if (!apiKey) {
-      throw new Error('Chave da API OpenAI não configurada');
-    }
-
+    // Usamos a chave da API diretamente, já que ela está segura na função de borda
+    const apiKey = Deno.env.get("OPENAI_API_KEY") || "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";
+    
     console.log("Gerando áudio com o texto:", text.substring(0, 50) + "...");
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',

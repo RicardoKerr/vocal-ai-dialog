@@ -25,6 +25,11 @@ export class OpenAIService {
         throw new Error(`Erro ao invocar função: ${error.message}`);
       }
       
+      if (!data || !data.choices || !data.choices[0]) {
+        console.error("Resposta inválida da API:", data);
+        throw new Error("Resposta inválida da API OpenAI");
+      }
+      
       console.log("Resposta recebida do Supabase Edge Function");
       return data.choices[0].message.content;
     } catch (error) {
@@ -48,6 +53,11 @@ export class OpenAIService {
       if (error) {
         console.error("Erro na função generate-audio:", error);
         throw new Error(`Erro ao invocar função: ${error.message}`);
+      }
+      
+      if (!data || !data.audioContent) {
+        console.error("Resposta inválida do gerador de áudio:", data);
+        throw new Error("Resposta inválida do gerador de áudio");
       }
       
       // Criar uma URL para o áudio a partir do conteúdo base64
