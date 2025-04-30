@@ -19,6 +19,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorCount, setErrorCount] = useState(0);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -71,6 +72,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
     setLoading(true);
     
     try {
+      console.log("Enviando mensagem para processamento:", input);
       // Processa a mensagem através do Supabase Edge Function
       const response = await openaiService.current.sendMessage(input);
       
@@ -81,17 +83,41 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
         timestamp: new Date(),
       };
       
-      // Gera o áudio para a resposta através do Supabase Edge Function
-      const audioUrl = await openaiService.current.generateAudio(response);
-      if (audioUrl) {
-        botMessage.audioUrl = audioUrl;
+      // Tenta gerar o áudio apenas se a resposta do chat foi bem-sucedida
+      if (response && !response.includes("Desculpe, ocorreu um erro")) {
+        try {
+          console.log("Gerando áudio para resposta");
+          // Gera o áudio para a resposta através do Supabase Edge Function
+          const audioUrl = await openaiService.current.generateAudio(response);
+          if (audioUrl) {
+            botMessage.audioUrl = audioUrl;
+          }
+        } catch (audioError) {
+          console.error("Erro ao gerar áudio, continuando sem áudio:", audioError);
+        }
       }
       
       setMessages(prev => [...prev, botMessage]);
+      setErrorCount(0); // Reset error count on success
       
     } catch (error) {
       console.error("Erro ao processar mensagem:", error);
       toast.error("Ocorreu um erro ao processar sua mensagem");
+      
+      // Increment error count and show more detailed error after multiple failures
+      setErrorCount(prev => prev + 1);
+      if (errorCount >= 2) {
+        toast.error("Problema persistente detectado. Verifique os logs do console para mais detalhes.");
+      }
+      
+      // Add error message from bot
+      const errorMessage: ChatMessageType = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: "Desculpe, ocorreu um erro ao processar sua mensagem. Estamos enfrentando problemas técnicos.",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setLoading(false);
       setTimeout(() => inputRef.current?.focus(), 100);

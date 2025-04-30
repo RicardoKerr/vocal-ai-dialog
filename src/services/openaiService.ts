@@ -11,6 +11,7 @@ export class OpenAIService {
   
   async sendMessage(message: string): Promise<string> {
     try {
+      console.log("Enviando mensagem para o Supabase Edge Function...");
       // Usar a função de borda para enviar a mensagem
       const { data, error } = await supabase.functions.invoke('send-chat-message', {
         body: { 
@@ -20,9 +21,11 @@ export class OpenAIService {
       });
       
       if (error) {
+        console.error("Erro na função send-chat-message:", error);
         throw new Error(`Erro ao invocar função: ${error.message}`);
       }
       
+      console.log("Resposta recebida do Supabase Edge Function");
       return data.choices[0].message.content;
     } catch (error) {
       console.error('Erro ao enviar mensagem para a OpenAI:', error);
@@ -33,6 +36,7 @@ export class OpenAIService {
   
   async generateAudio(text: string): Promise<string> {
     try {
+      console.log("Gerando áudio via Supabase Edge Function...");
       // Usar a função de borda para gerar áudio
       const { data, error } = await supabase.functions.invoke('generate-audio', {
         body: { 
@@ -42,6 +46,7 @@ export class OpenAIService {
       });
       
       if (error) {
+        console.error("Erro na função generate-audio:", error);
         throw new Error(`Erro ao invocar função: ${error.message}`);
       }
       
@@ -52,6 +57,7 @@ export class OpenAIService {
         bytes[i] = binaryString.charCodeAt(i);
       }
       const blob = new Blob([bytes], { type: 'audio/mp3' });
+      console.log("Áudio gerado com sucesso");
       return URL.createObjectURL(blob);
     } catch (error) {
       console.error('Erro ao gerar áudio:', error);

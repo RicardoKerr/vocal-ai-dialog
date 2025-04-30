@@ -17,11 +17,12 @@ serve(async (req) => {
     const { message, systemPrompt } = await req.json();
     
     // Obter a chave da API do ambiente seguro
-    const apiKey = Deno.env.get('OPENAI_API_KEY');
+    const apiKey = "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";
     if (!apiKey) {
       throw new Error('Chave da API OpenAI não configurada');
     }
 
+    console.log("Enviando mensagem para a OpenAI...");
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -39,10 +40,13 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Erro na API OpenAI: ${response.status}`);
+      const errorData = await response.json();
+      console.error("Erro na API OpenAI:", errorData);
+      throw new Error(`Erro na API OpenAI: ${response.status} - ${JSON.stringify(errorData)}`);
     }
 
     const data = await response.json();
+    console.log("Resposta recebida da OpenAI");
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
