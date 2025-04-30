@@ -17,6 +17,10 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl }) => {
     const audio = audioRef.current;
     if (!audio) return;
     
+    // Reset player when URL changes
+    setIsPlaying(false);
+    setCurrentTime(0);
+    
     const setAudioData = () => {
       setDuration(audio.duration);
     };
@@ -25,14 +29,19 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl }) => {
       setCurrentTime(audio.currentTime);
     };
     
+    const handleAudioEnd = () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+    };
+    
     audio.addEventListener('loadeddata', setAudioData);
     audio.addEventListener('timeupdate', setAudioTime);
-    audio.addEventListener('ended', () => setIsPlaying(false));
+    audio.addEventListener('ended', handleAudioEnd);
     
     return () => {
       audio.removeEventListener('loadeddata', setAudioData);
       audio.removeEventListener('timeupdate', setAudioTime);
-      audio.removeEventListener('ended', () => setIsPlaying(false));
+      audio.removeEventListener('ended', handleAudioEnd);
     };
   }, [audioUrl]);
   
@@ -43,7 +52,9 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl }) => {
     if (isPlaying) {
       audio.pause();
     } else {
-      audio.play();
+      audio.play().catch(err => {
+        console.error("Erro ao reproduzir áudio:", err);
+      });
     }
     setIsPlaying(!isPlaying);
   };
